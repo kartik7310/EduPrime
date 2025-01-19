@@ -43,7 +43,7 @@ export const createCourse = async(req,res)=>{
 
 
 
-const showAllCourses = async(req,res)=>{
+export const showAllCourses = async(req,res)=>{
   try {
     const coursed = await Course.find({},{
                                         courseName:true,
@@ -56,5 +56,41 @@ const showAllCourses = async(req,res)=>{
         return res.status(200) .json({success:'course fetched successfully'})                               
   } catch (error) {
     return res.status(500).json({success:false,message:error.message})
+  }
+}
+
+
+export const getCourseDetails = async(req,res)=>{
+  try {
+    const {courseId}  = req.body;
+    const courseDetails =await Course.findById({id:courseId})
+                                                          .populate({
+                                                               path:'instructor',
+                                                               populate:{
+                                                                 path:'additionDetails'
+                                                              },
+                                                          })
+                                                              .populate('Category')
+                                                              .populate('ratingAndReviews')
+                                                              .populate({
+                                                                     path:'courseContent',
+                                                                      populate:{
+                                                                    path:'subSection'
+                                                              },
+                                                            })
+                                                            .exec()
+           if(!courseDetails){
+            return res.status(400).json({
+              success:false,
+              message:`course not found with ${courseId}`
+            })
+           } 
+              return res.status(200).json({
+                success:true,
+                message:'course fetched successfully',
+                data:courseDetails
+              })                                       
+  }     catch (error) {
+      return res.status(500).json({success:false,message:'internal server error'})
   }
 }

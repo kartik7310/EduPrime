@@ -11,9 +11,16 @@ const courseSchema = new mongoose.Schema({
   price: { type: Number },
   thumbnail: { type: String },
   Category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-  tag:{type:string},
+  tag:{type:string,required:true},
   studentEnrolled: [
     { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   ],
+ instructions:{
+  type:[string],
+ },
+ status:{
+  type:string,
+  enum:['Draft','Published']
+ }
 });
 export const Course = mongoose.model("Course", courseSchema);

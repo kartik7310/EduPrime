@@ -1,6 +1,6 @@
 import { User } from "../models/userModel.js";
 import { mailSender } from "../config/nodemailer.js";
-const sendPasswordResetLink = async (req, res, next) => {
+export const sendPasswordResetLink = async (req, res, next) => {
   try {
     // get email and check this email
          const { email } = req.body;
@@ -24,12 +24,12 @@ const sendPasswordResetLink = async (req, res, next) => {
          return res
            .status(200)
            .json({ success: true, message: "email send successfully" });
-  }      catch (error) {
+     }  catch (error) {
       console.log("error during resetPassword", error);
   }
 };
 
-const resetPassword = async(req,res)=>{
+export const resetPassword = async(req,res)=>{
   try {
       //todos:
       //get password,confirmPasswordToken,token
@@ -57,7 +57,6 @@ const resetPassword = async(req,res)=>{
         }
         return res.status(200).json({success:true,message:'password update successfully'})
       } catch (error) {
-        console.log(error);
-        
+        console.log(error);       
       }
 }  

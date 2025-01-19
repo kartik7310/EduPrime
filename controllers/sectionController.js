@@ -1,6 +1,6 @@
 import { Section } from "../models/sectionModel.js";
 import { Course } from "../models/courseModel.js";
-const createSection = async(req,res)=>{
+export const createSection = async(req,res)=>{
   try {
     const {sectionName,courseId}= req.body;
     if(!sectionName||!courseId){
@@ -19,7 +19,7 @@ const createSection = async(req,res)=>{
   }
 }
 
-const updateSection = async(req,res)=>{
+export const updateSection = async(req,res)=>{
  try {
    const {sectionName,sectionId} = req.body;
    if(!sectionName||!sectionId){
@@ -31,9 +31,9 @@ const updateSection = async(req,res)=>{
   return res.status(500).json({success:false,message:'enable to update section',error:error.message})
  }
 
- }
-
- const deleteSection = async(req,res)=>{
+ 
+}
+export const deleteSection = async(req,res)=>{
   try {
     const {sectionId} = req.params;
     if(!sectionId){

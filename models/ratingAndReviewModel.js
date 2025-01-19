@@ -1,7 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 const ratingAndReviewSchema = new mongoose.Schema({
  User:{type:mongoose.Schema.Types.ObjectId,ref:'User',required:true},
  rating:{type:Number,required:true},
- review:{type:String,required:true}
+ review:{type:String,required:true},
+ course:{type:mongoose.Schema.Types.ObjectId,required:true,ref:'Course',index:true}
 });
-export const ratingAndReview = mongoose.model('ratingAndReview',ratingAndReview)
+export const RatingAndReview = mongoose.model('RatingAndReview',ratingAndReview)

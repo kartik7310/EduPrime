@@ -4,5 +4,5 @@ const SchemaCategory = new mongoose.Schema({
   description: { type: String, trim: true },
   course: [{ type: mongoose.Schema.ObjectId, ref: "Course" }],
 });
-export const Category = mongoose.model("Category", tagSchema);
+export const Category = mongoose.model("Category", SchemaCategory);
 

@@ -33,7 +33,7 @@ const capturePayment = async(req,res)=>{
   
     //create order
  const amount = course.price;
- const currency = course.currency;
+ const currency = 'INR';
 
  //create option
  const options ={
@@ -45,12 +45,12 @@ const capturePayment = async(req,res)=>{
       userId,
     }
  }
-//initiate payment
+//initiate payment using razorpay
 try {
-        const paymentResponse = await instance.orders.create(options);
-        console.log(paymentResponse);
-        return res.status(200).json({
-               courseName:course.courseName,
+      const paymentResponse = await instance.orders.create(options);
+      console.log(paymentResponse);
+      return res.status(200).json({
+             courseName:course.courseName,
                courseDescription:course.courseDescription,
                thumbnail:course.thumbnail,
                orderId:paymentResponse.id,
@@ -58,14 +58,48 @@ try {
                amount:paymentResponse.amount
                
     })
-  }       catch (error) {
-         return res.status(500).json({success:false,message:'could not initiate order'})
+  }   catch (error) {
+     return res.status(500).json({success:false,message:'could not initiate order'})
 }
 
   }
-// verify signature of razorpay and server
-  const verifySignature =async(req,res)=>{
-    const webhookSecrete = '1234456';
-    const signature = req.headers['x-razorpay-signature']
+     // verify signature of razorpay and server
+  const verifySignature =async (req,res )=>{
+          const webhookSecrete = '1234456';
+          const signature = req.headers['x-razorpay-signature'];
+          const shasum = crypto.createHmac('sha256',webhookSecrete);
+          shasum.update(json.stringify(req.body));
+          const digest = shasum.digest('hex');
+   if(signature == digest){
+          console.log('payment is Authorised'); 
+   // find the course and enroll the student
+   try {
+        const {userId,courseId} = req.body.payload.payment.entity.notes;
+        const enrolledCourse= await Course.findByIdAndUpdate(
+                                                  {courseId},
+                                                  {$push:{studentEnrolled:userId}},
+                                                  {new:true}
+                                                 );
+                console.log(enrolledCourse);
+                                                
+              if(!enrolledCourse){
+                return res.status(400).json({message:'course not found'})
+              }  
+           //find student and add into course
+         const enrolledStudent = await User.findByIdAndUpdate(
+                                              {userId},
+                                              {$push:{course:courseId}},
+                                              {new :true}
+                                            )
+                console.log(enrolledStudent);
+         //send email               
+       const sendEnrolledEmail = await mailSender(enrolledStudent.email,'congratulations from eduPrime','congratulations,you are enrolled into new course');
+         return res.status(200).json({success:true,message:'signature verified and course added'})
+      } catch (error) {
+       return res.status(500).json({success:false,message:error.message})
+      }
 
+  }else{
+    return res.status(400).json({message:'signature not match'})
   }
+}

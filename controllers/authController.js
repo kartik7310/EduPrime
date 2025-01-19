@@ -19,18 +19,18 @@ const signup = async(req,res)=>{
       return res.status(400).json({message:'password or confirmPassword not same'})
     }
     const isUser = await User.findUnique({$or:[{email},{contact}]});
-    if(isUser){
-      return res.status(400).json({message:'user is already register'})
-    }
-    //otp generator
-    const otpCode = await secureOtpGenerator();
-    await sendVerificationEmail(email,otp)
-    const hashPassword = await bcrypt.hash(password,10);
-    const profile = await Profile.create({dateOfBirth:null,gender:null,about:null})
-     const user = await User.create({email,password:hashPassword,firstName,lastName,accountType,contact,otp:otpCode,additionDetails:profile._id,image:`imageUrl`});
+      if(isUser){
+        return res.status(400).json({message:'user is already register'})
+      }
+       //otp generator
+         const otpCode = await secureOtpGenerator();
+         await sendVerificationEmail(email,otp)
+          const hashPassword = await bcrypt.hash(password,10);
+         const profile = await Profile.create({dateOfBirth:null,gender:null,about:null})
+         const user = await User.create({email,password:hashPassword,firstName,lastName,accountType,contact,otp:otpCode,additionDetails:profile._id,image:`imageUrl`});
  
- return res.status(200).json({success:true,message:'user register successfully',user})
-  } catch (error) {
+        return res.status(200).json({success:true,message:'user register successfully',user})
+  }catch (error) {
     console.log(error);
     
   }

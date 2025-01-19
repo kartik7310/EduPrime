@@ -1,7 +1,7 @@
 import { Profile } from "../models/profileModel.js";
 import {User} from '../models/userModel.js'
 
-const updateProfile = async(req,res)=>{
+export const updateProfile = async(req,res)=>{
   try {
           const{dateOfBirth = "",about= "" ,contact,gender} = req.body;
           const userId = req.user;
@@ -29,7 +29,7 @@ const updateProfile = async(req,res)=>{
 
 // explore -> how can we schedule this deletion operation and cron job
 
-const deleteProfile = async(req,res) =>{
+export const deleteProfile = async(req,res) =>{
   try {
          const userId = req.user.id;
         const userDetails = await User.findById({userId});
@@ -47,7 +47,7 @@ const deleteProfile = async(req,res) =>{
   }
 }
 
-const getAllUserDetails = async(req,res)=>{
+export const getAllUserDetails = async(req,res)=>{
   try {
     const userId = req.user.id;
     const user = await User.findById({userId}).populate('additionDetails').exec();
