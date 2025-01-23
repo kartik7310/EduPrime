@@ -7,9 +7,9 @@ export const createSection = async(req,res)=>{
       return res.status(400).json({message:'all fields are required'})
     }
     const section = await Section.create({sectionName});
-    const updateCourseDetails = await Course.findByIdAndUpdate({courseId},
+    const updateCourseDetails = await Course.findByIdAndUpdate(courseId,
                                                       {$push:{
-                                                        courseContent:section.id}}
+                                                        courseContent:section._id}}
                                                     
                                                   ).populate('Section').populate('Subsection')
      return res.status(200).json({success:true,message:'section created successfully'})
@@ -25,7 +25,7 @@ export const updateSection = async(req,res)=>{
    if(!sectionName||!sectionId){
      return res.status(400).json({message:'all fields are required'})
    }
-   const updateSection = await Section.findByIdAndUpdate({sectionId},{sectionName},{new:true});
+   const updateSection = await Section.findByIdAndUpdate(sectionId,{sectionName},{new:true});
    return res.status(200).json({success:true,message:'section updated successfully'})
  } catch (error) {
   return res.status(500).json({success:false,message:'enable to update section',error:error.message})

@@ -5,4 +5,4 @@ const profileSchema = new mongoose.Schema({
   about: { type: String, trim: true },
   contact: { type: String, trim: true, required: true },
 });
-export const Profile = mongoose.model("Profile", userSchema);
+export const Profile = mongoose.model("Profile", profileSchema);

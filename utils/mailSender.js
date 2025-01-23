@@ -1,4 +1,4 @@
-import { mailSender } from "../config/nodemailer.js";
+import { mailSender } from "../config/nodemailer.js"
 export const sendVerificationEmail = async (email, otp) => {
   try {
     const response = await mailSender(

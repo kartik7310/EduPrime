@@ -1,6 +1,6 @@
 import { RatingAndReview } from "../models/ratingAndReviewModel.js";
 import { Course } from "../models/courseModel.js";
-import { mongo, Mongoose } from "mongoose";
+
 
 export const createRatingAndReview = async(req,res)=>{
 try {
@@ -37,7 +37,7 @@ try {
                                                            user:userId
                                                         });
                     // create rating and review 
-                        const updatedCourseDetails =     await Course.findByIdAndUpdate(userId,
+                        const updatedCourseDetails = await Course.findByIdAndUpdate(courseId,
                                                    {
                                                      $push:{
                                                       ratingAndReviews:ratingAndReview._id

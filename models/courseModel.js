@@ -11,15 +11,15 @@ const courseSchema = new mongoose.Schema({
   price: { type: Number },
   thumbnail: { type: String },
   Category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-  tag:{type:string,required:true},
+  tag:{type:String,required:true},
   studentEnrolled: [
     { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   ],
  instructions:{
-  type:[string],
+  type:[String],
  },
  status:{
-  type:string,
+  type:String,
   enum:['Draft','Published']
  }
 });

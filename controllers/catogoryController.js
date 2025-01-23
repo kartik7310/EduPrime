@@ -1,4 +1,4 @@
-import {Category, Tag} from '../models/categoryModel.js'
+import {Category} from '../models/categoryModel.js'
 
 export const CreateCategory = async(req,res)=>{
 
@@ -9,10 +9,10 @@ export const CreateCategory = async(req,res)=>{
               message:'all fields are required'
             })
           }
-        const tag = await Tag.create({name,description})
+        const category = await Category.create({name,description})
        return res.status(400).json({
            success:true,
-           message:'tags are created successfully'
+           message:'Category are created successfully'
        })
      } catch (error) {
         return res.status(500).json({
@@ -25,8 +25,8 @@ export const CreateCategory = async(req,res)=>{
 
 export const showAllCategory = async(req,res)=>{
      try {
-          const category = await Tag.find({},{name:true,description:true});
-          return res.status(200).json({success:true,message:'tags fetch successfully'})
+          const category = await Category.find({},{name:true,description:true});
+          return res.status(200).json({success:true,message:'category fetch successfully'})
      }   catch (error) {
          return res.status(500).json({
          success:false,
@@ -39,7 +39,7 @@ export const showAllCategory = async(req,res)=>{
 export const CategoryPageDetails = async(req,res)=>{
   try {
     const {categoryId}= req.body;
-    const category = await Category.findById({categoryId}).populate('Course');
+    const category = await Category.findById(categoryId).populate('Course');
     if(!category){
       return res.status(404).json({message:'this category course not found'})
     }

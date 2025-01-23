@@ -31,13 +31,7 @@ export const sendPasswordResetLink = async (req, res, next) => {
 
 export const resetPassword = async(req,res)=>{
   try {
-      //todos:
-      //get password,confirmPasswordToken,token
-        //check both password are same or not
-      //find User with token or check this token is less than time duration
-      //hashPassword
-      //update user with new password
-      //return response
+     
       const {password,confirmPassword,token}=req.body;
       if(!password||!confirmPassword||!token){
         return res.status(400).json({message:"all fields are required"})
