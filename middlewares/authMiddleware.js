@@ -1,33 +1,31 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
+import { errorHandler } from "../utils/error.js";
+const JWT_SECRET = "kartik";
 
 export const userAuth = async (req, res, next) => {
   try {
-    // Retrieve token from cookies, body, or headers
-    const token = 
-      req.cookies?.token || 
-      req.body?.token || 
+    const token =
+      req.cookies?.token ||
       (req.headers["authorization"] && req.headers["authorization"].split(" ")[1]);
 
     if (!token) {
-      return res.status(400).json({ message: "Authentication token not provided." });
+      return next(new errorHandler(401,"Authentication token not provided."))
     }
 
     // Verify token
-    const decodedToken = jwt.verify(token, process.env.SECRET_TOKEN);
-    if (!decodedToken) {
-      return res.status(401).json({ message: "Invalid token." });
-    }
+    const decodedToken = jwt.verify(token, JWT_SECRET);
 
+    if (!decodedToken) {
+      return next(new errorHandler("Invalid token") );
+    }
+    
     // Attach user information to the request object
     req.user = decodedToken;
     next();
   } catch (error) {
-    return res.status(401).json({
-      message: "Error while verifying token.",
-      error: error.message,
-    });
+    next(error)
   }
 };
 
@@ -36,10 +34,14 @@ export const roleBasedAccess = (allowUser) => {
     try {
       const user = req.user; // Assuming userAuth middleware has already added req.user
       if (!user) {
-        return res.status(400).json({ message: "User details not provided." });
+       return next (new errorHandler("User details not provided.") );
       }
 
       // Check if user's role matches the allowed role
+      if (!user.accountType) {
+       return next(new errorHandler("User account type not found." ));
+      }
+
       if (user.accountType === allowUser) {
         return next();
       }
@@ -48,10 +50,7 @@ export const roleBasedAccess = (allowUser) => {
         message: `Access denied. This route is only for ${allowUser}.`,
       });
     } catch (error) {
-      return res.status(401).json({
-        message: "Error during role-based access control.",
-        error: error.message,
-      });
+     next(error)
     }
   };
 };

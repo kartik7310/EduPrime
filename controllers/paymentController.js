@@ -3,32 +3,27 @@ import { Course } from "../models/courseModel.js";
 import { User } from "../models/userModel.js";
 import { mailSender } from "../config/nodemailer.js";
 import mongoose from "mongoose";
+import { errorHandler } from "../utils/error.js";
 //courseEnroll template
 
 //capture the payment  and initiate the Razorpay order
- export const capturePayment = async (req, res) => {
-             // Get userId and courseId
-             const { courseId } = req.body;
-             const userId = req.user?.id; // Ensure user is authenticated
 
-   // Validate courseId and userId
-    if (!courseId || !userId) {
-      return res
-        .status(400)
-         .json({ message: "Course ID or user ID is not provided" });
-   }
+export const capturePayment = async (req, res, next) => {
+  const { courseId } = req.params;
+  const userId = req.user?.id; // Ensure user is authenticated
 
-    let course;
-   try {
-    // Validate courseId
-    course = await Course.findById(courseId);
+  if (!courseId || !userId) {
+    return next(new errorHandler("courseId and userId are required", 400));
+  }
+
+  try {
+    // Fetch course and validate
+    const course = await Course.findById(courseId);
     if (!course) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Course not found" });
+      return next(new errorHandler("Course not found", 404));
     }
 
-    // Check if the user is already enrolled
+    // Check for duplicate enrollment
     const uid = new mongoose.Types.ObjectId(userId);
     if (course.studentEnrolled.includes(uid)) {
       return res.status(400).json({
@@ -36,92 +31,121 @@ import mongoose from "mongoose";
         message: "Student is already enrolled in this course",
       });
     }
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
 
-  // Create order
+    // Validate course price
     const amount = course.price;
-    const currency = "INR";
+    if (!amount || amount <= 0) {
+      return next(new errorHandler("Invalid course price", 400));
+    }
 
-  // Create options for Razorpay
-  const options = {
-    amount: amount * 100, // Convert to smallest currency unit (paise)
-    currency,
-    receipt: `receipt_${Date.now()}`, // Unique receipt ID
-    notes: {
-      courseId,
-      userId,
-    },
-  };
+    // Create Razorpay order
+    const options = {
+      amount: amount * 100, // Convert to paise
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      notes: {
+        courseId,
+        userId,
+      },
+    };
 
-  try {
-    // Initiate payment using Razorpay
     const paymentResponse = await instance.orders.create(options);
-    console.log(paymentResponse);
 
     return res.status(200).json({
-         success: true,
-         courseName: course.courseName,
-         courseDescription: course.courseDescription,
-         thumbnail: course.thumbnail,
-         orderId: paymentResponse.id,
-         currency: paymentResponse.currency,
-         amount: paymentResponse.amount,
+      success: true,
+      courseName: course.courseName,
+      courseDescription: course.courseDescription,
+      thumbnail: course.thumbnail,
+      orderId: paymentResponse.id,
+      currency: paymentResponse.currency,
+      amount: paymentResponse.amount,
     });
   } catch (error) {
-    console.error("Razorpay order creation failed:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "Could not initiate order. Please try again later.",
-    });
+    console.error("Payment Error:", error.message);
+    return next(new errorHandler("Could not initiate order. Please try again later.", 500));
   }
 };
-// verify signature of razorpay and server
-export const verifySignature = async (req, res) => {
-        const webhookSecrete = "1234456";
-        const signature = req.headers["x-razorpay-signature"];
-        const shasum = crypto.createHmac("sha256", webhookSecrete);
-        shasum.update(json.stringify(req.body));
-        const digest = shasum.digest("hex");
-         if (signature == digest) {
-             console.log("payment is Authorised");
-              // find the course and enroll the student
-         try {
-          const { userId, courseId } = req.body.payload.payment.entity.notes;
-          const enrolledCourse = await Course.findByIdAndUpdate(
-              { courseId },
-              { $push: { studentEnrolled: userId } },
-              { new: true }
+
+export const verifySignature = async (req, res, next) => {
+  try {
+    // Use environment variable for webhook secret
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers["x-razorpay-signature"];
+
+    if (!signature) {
+      return res.status(400).json({ success: false, message: "Missing signature" });
+    }
+
+    // Verify Razorpay signature
+    const shasum = crypto.createHmac("sha256", webhookSecret);
+    shasum.update(JSON.stringify(req.body));
+    const digest = shasum.digest("hex");
+
+    if (signature !== digest) {
+      return res.status(400).json({ success: false, message: "Signature does not match" });
+    }
+
+    console.log("Payment is authorized");
+
+    // Extract userId and courseId from the Razorpay notes
+    const { userId, courseId } = req.body.payload.payment.entity.notes;
+
+    if (!userId || !courseId) {
+      return res.status(400).json({ success: false, message: "Invalid data: userId or courseId missing" });
+    }
+
+    // Use a transaction to ensure atomicity
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Update course enrollment
+      const enrolledCourse = await Course.findByIdAndUpdate(
+        courseId,
+        { $addToSet: { studentEnrolled: userId } }, // Avoid duplicate additions
+        { new: true, session }
       );
-          console.log(enrolledCourse);
 
       if (!enrolledCourse) {
-        return res.status(400).json({ message: "course not found" });
+        throw new Error("Course not found");
       }
-      //find student and add into course
+
+      // Update student's enrolled courses
       const enrolledStudent = await User.findByIdAndUpdate(
-        { userId },
-        { $push: { course: courseId } },
-        { new: true }
+        userId,
+        { $addToSet: { courses: courseId } }, // Avoid duplicate additions
+        { new: true, session }
       );
-      console.log(enrolledStudent);
-      //send email
-      const sendEnrolledEmail = await mailSender(
+
+      if (!enrolledStudent) {
+        throw new Error("Student not found");
+      }
+
+      // Commit the transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      console.log("Enrollment successful:", { enrolledCourse, enrolledStudent });
+
+      // Send email notification
+      await mailSender(
         enrolledStudent.email,
-        "congratulations from eduPrime",
-        "congratulations,you are enrolled into new course"
+        "Congratulations from EduPrime",
+        "Congratulations, you have been enrolled in a new course!"
       );
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "signature verified and course added",
-        });
+
+      return res.status(200).json({
+        success: true,
+        message: "Signature verified and course enrollment successful",
+      });
     } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
+      // Rollback transaction on failure
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
-  } else {
-    return res.status(400).json({ message: "signature not match" });
+  } catch (error) {
+    console.error("Verification Error:", error.message);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -1,22 +1,32 @@
 import nodemailer from "nodemailer";
+
 export const mailSender = async (email, title, body) => {
   try {
-    let transporter = nodemailer.createTransport({
+  
+    // Create the transporter
+    const transporter = nodemailer.createTransport({
       host: process.env.MAIL_HOST,
-      port: 587,
-      secure: false, // true for port 465, false for other ports
+      port: process.env.MAIL_PORT || 587, 
+      secure: process.env.MAIL_PORT === "465", 
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
       },
     });
-    let info = await transporter.sendMail({
-      from: "Britan coaching center",
-      to: `${email}`,
-      subject: `${title}`,
-      html: `${body}`,
+
+    // Send email
+    const info = await transporter.sendMail({
+      from: `"EduPrime Coaching Center" <${process.env.MAIL_USER}>`,
+      to: email,
+      subject: title,
+      html: body,
     });
+    console.log(info);
+    
+    console.log(`Email sent successfully to ${email}: ${info.messageId}`);
+    return info;
   } catch (error) {
-    console.log(error.message);
+    console.error(`Error in mailSender: ${error.message}`);
+    throw error;
   }
 };

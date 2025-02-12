@@ -9,7 +9,7 @@ const courseSchema = new mongoose.Schema({
     { type: mongoose.Schema.Types.ObjectId, ref: "RatingAndReview" },
   ],
   price: { type: Number },
-  thumbnail: { type: String },
+  // thumbnail: { type: String },
   Category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
   tag:{type:String,required:true},
   studentEnrolled: [

@@ -1,47 +1,104 @@
 import { Section } from "../models/sectionModel.js";
 import { Course } from "../models/courseModel.js";
-export const createSection = async(req,res)=>{
-  try {
-    const {sectionName,courseId}= req.body;
-    if(!sectionName||!courseId){
-      return res.status(400).json({message:'all fields are required'})
-    }
-    const section = await Section.create({sectionName});
-    const updateCourseDetails = await Course.findByIdAndUpdate(courseId,
-                                                      {$push:{
-                                                        courseContent:section._id}}
-                                                    
-                                                  ).populate('Section').populate('Subsection')
-     return res.status(200).json({success:true,message:'section created successfully'})
-                                                    
-  } catch (error) {
-    return res.status(500).json({success:false,message:'enable to create section',error:error.message})
-  }
-}
+import { errorHandler } from "../utils/error.js";
 
-export const updateSection = async(req,res)=>{
- try {
-   const {sectionName,sectionId} = req.body;
-   if(!sectionName||!sectionId){
-     return res.status(400).json({message:'all fields are required'})
-   }
-   const updateSection = await Section.findByIdAndUpdate(sectionId,{sectionName},{new:true});
-   return res.status(200).json({success:true,message:'section updated successfully'})
- } catch (error) {
-  return res.status(500).json({success:false,message:'enable to update section',error:error.message})
- }
-
- 
-}
-export const deleteSection = async(req,res)=>{
+export const createSection = async (req, res, next) => {
   try {
-    const {sectionId} = req.params;
-    if(!sectionId){
-      return res.status(400).json({message:'sectionId not provide'})
+    const { sectionName } = req.body;
+    const { courseId } = req.params;
+
+    if (!sectionName) {
+      return next(new errorHandler("Section name is required"));
     }
-    const deleteSection = await Section.findByIdAndDelete({sectionId});
-    return res.status(200).json({success:true,message:'section delete successfully'})
+
+    if (!courseId) {
+      return next(new errorHandler("Course ID not provided"));
+    }
+
+    // Create new section
+    const section = await Section.create({ sectionName });
+
+    // Update course to include the new section
+    const updateCourseDetails = await Course.findByIdAndUpdate(
+      courseId,
+      { $push: { courseContent: section._id } },
+      { new: true }
+    )
+      .populate("Section") // Make sure your Course schema supports this
+      .populate("Subsection"); // Make sure your Course schema supports this
+
+    if (!updateCourseDetails) {
+      return next(new errorHandler("Course not found or update failed"));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Section created successfully",
+    });
   } catch (error) {
-    return res.status(500).json({success:false,message:'enable to delete section',error:error.message})
+    next(error);
   }
- }
+};
+
+export const updateSection = async (req, res, next) => {
+  try {
+    const { sectionName } = req.body;
+    const { sectionId } = req.params;
+
+    if (!sectionName) {
+      return next(new errorHandler(400, "Section name is required"));
+    }
+
+    if (!sectionId) {
+      return next(new errorHandler(400, "Section ID not provided"));
+    }
+
+    // Update section
+    const updateSection = await Section.findByIdAndUpdate(
+      sectionId,
+      { sectionName },
+      { new: true }
+    );
+
+    if (!updateSection) {
+      return next(new errorHandler(404, "Section not found"));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Section updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteSection = async (req, res, next) => {
+  try {
+    const { sectionId } = req.params;
+
+    if (!sectionId) {
+      return next(new errorHandler("Section ID not provided"));
+    }
+
+    // Delete section
+    const deleteSection = await Section.findByIdAndDelete(sectionId);
+
+    if (!deleteSection) {
+      return next(new errorHandler(404, "Section not found"));
+    }
+
+    // Optional: Remove the section from any course that references it
+    await Course.updateMany(
+      { courseContent: sectionId },
+      { $pull: { courseContent: sectionId } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Section deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

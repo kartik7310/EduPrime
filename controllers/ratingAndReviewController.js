@@ -1,17 +1,20 @@
 import { RatingAndReview } from "../models/ratingAndReviewModel.js";
 import { Course } from "../models/courseModel.js";
+import { errorHandler } from "../utils/error.js";
+import e from "express";
 
 
 export const createRatingAndReview = async(req,res)=>{
 try {
   
       //get data from req 
-      const{rating,review,courseId} = req.body;
+      const{rating,review} = req.body;
+      const courseId = req.params
       //get user id from middleware
       const userId = req.user.id;
       //validation
       if(!courseId||!rating||!review){
-        return res.status(400).json({success:false,message:'all fields are required'})
+       return next(new errorHandler("all fields are required"))
       }
       //check user is enrolled or not
     const courseDetails = await Course.findOne({
@@ -19,7 +22,7 @@ try {
                                             studentEnrolled:{$elemMatch:{$eq:userId}}
                                           });
               if(!courseDetails){
-                return res.status(400).json({message:'user not enrolled in this course'})
+                return next(new errorHandler("course details not found"))
               }
               //check rating and review already exist or not
       const alreadyRatingAndReview = await RatingAndReview.findById(
@@ -27,7 +30,7 @@ try {
                                                               {course:courseId}
                                                               )
         if(alreadyRatingAndReview){
-            return res.status(400).json({message:'you have already given the rating '})
+          return next(new errorHandler("you have already given the rating"))
         }
         //create review and rating
       const ratingAndReview = await RatingAndReview.create({
@@ -55,14 +58,18 @@ try {
            }
       )
   } catch (error) {
-  return res.status(500).json({success:false,message:'internal server error',error:error.message})
+ next(error)
  }
 }
 
 export const getAverageRating = async (req,res)=>{
     try {
       //get courseId
-      const{courseId}= req.body;
+      const{courseId}= req.params;
+      if(!courseId){
+        return next(new errorHandler(400,"courseId not provide"))
+      }
+      
       //calculate avg rating
       const result = await RatingAndReview.aggregate([
                 {
@@ -91,11 +98,11 @@ export const getAverageRating = async (req,res)=>{
             })
       //if not avg rating/review exist
     } catch (error) {
-      return res.status(500).json({success:false,message:'internal server error'})
+      next(error)
     }
   }
 
- export const getAllRating = async (req,res)=>{
+ export const getAllRating = async (req,res,next)=>{
   try {
       const allReview = await RatingAndReview.find({})
                                                .sort({rating:'desc'})
@@ -111,6 +118,10 @@ export const getAverageRating = async (req,res)=>{
                                                   select:"courseName"
                                                 }
                                                ).exec();
+                                  if(!allReview){
+                                    return next(new errorHandler(404,"review not found"))
+                                
+                                  }
       return res.status(200).json(
         {
           success:true,
@@ -120,6 +131,50 @@ export const getAverageRating = async (req,res)=>{
       )
               
   } catch (error) {
-    return res.status(500).json({success:false,message:'internal server error'})
+    next(error)
   }
   }
+  
+export async function deleteReviewAndRating(req, res, next) {
+  try {
+    const { id } = req.user; // Authenticated user's ID
+    const { courseId } = req.params; // Extract course ID from URL params
+
+    if (!courseId) {
+      return next(new errorHandler("Course ID not found", 400));
+    }
+
+    // Check if the user has reviewed the course
+    const userExist = await RatingAndReview.findOne({ userId: id });
+    if (!userExist) {
+      return next(new errorHandler("User not found", 404));
+    }
+
+    // Ensure user is allowed to delete their review
+    if (userExist.userId.toString() !== id.toString()) {
+      return next(new errorHandler("You cannot delete this reviewAndRating", 403));
+    }
+
+    // Delete the review and update the course accordingly
+    const updateCourse = await Course.findOneAndDelete({
+      $or: [
+        { _id: courseId },
+        { userId: id }
+      ]
+    });
+
+    if (!updateCourse) {
+      return next(new errorHandler("Course not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Review deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+

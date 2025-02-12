@@ -1,23 +1,24 @@
 import { Profile } from "../models/profileModel.js";
 import {User} from '../models/userModel.js'
-export const updateProfile = async (req, res) => {
+import { errorHandler } from "../utils/error.js";
+export const updateProfile = async (req, res,next) => {
   try {
     const { dateOfBirth = "", about = "", contact, gender } = req.body;
     const userId = req.user.id; 
 
     if (!contact || !gender || !userId) {
-      return res.status(400).json({ message: "All fields are required" });
+      return next(new errorHandler("All fields are required" ));
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return next(new errorHandler("user not found" ));
     }
 
     const profileId = user.additionDetails;
     const profileDetails = await Profile.findById(profileId);
     if (!profileDetails) {
-      return res.status(404).json({ message: "Profile not found" });
+      return next(new errorHandler("profile not found" ));
     }
 
     profileDetails.dateOfBirth = dateOfBirth;
@@ -31,7 +32,7 @@ export const updateProfile = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "Profile updated successfully" });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error updating profile", error: error.message });
+   next(error)
   }
 };
 
@@ -43,7 +44,7 @@ export const deleteProfile = async (req, res) => {
     const userDetails = await User.findById(userId);
 
     if (!userDetails) {
-      return res.status(400).json({ message: "User does not exist" });
+      return next(new errorHandler("user dose not exist" ));
     }
 
     const profileId = userDetails.additionDetails;
@@ -56,20 +57,20 @@ export const deleteProfile = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "Profile deleted successfully" });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error deleting profile", error: error.message });
+    next(error)
   }
 };
-export const getAllUserDetails = async (req, res) => {
+export const getAllUserDetails = async (req, res,next) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId).populate("additionDetails").exec();
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return next(new errorHandler("use not found" ));
     }
 
     return res.status(200).json({ success: true, message: "Data fetched successfully", data: user });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error fetching user details", error: error.message });
+   next(error)
   }
 };

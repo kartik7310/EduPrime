@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary'
+import {cloudinary} from "../config/cloudinary.js"
 export const uploadImage = async (file, folder, height, quality) => {
   const option = { folder };
   if (height) option.height = height;
