@@ -1,146 +1,230 @@
-# EduPrime  
-EduPrime is an **Course Management System** (CMS) designed to streamline the learning experience for **teachers** and **students**. Built with a focus on **scalability**, **security**, and **feature-rich APIs**, EduPrime empowers efficient course creation, student management, and seamless interactions.  
+# EduPrime - Learning Management System
 
----
+EduPrime is a comprehensive Learning Management System (LMS) built with Node.js, Express, and MongoDB. It provides a complete platform for managing online education with features for both students and instructors.
 
-## 🚀 Key Features  
+## 🚀 Features
 
-### **1. Role-Based Access Control (RBAC)**  
-- **Teachers**:  
-  - Create, update, and delete courses.  
-  - Upload media files (images, videos) for course content.  
-- **Students**:  
-  - Enroll in courses.  
-  - Access learning materials.  
-  - Submit feedback and reviews.  
+### Authentication & User Management
+- **OTP-Based Signup**: Secure email verification using one-time passwords
+- **JWT Authentication**: Secure token-based authentication with HTTP-only cookies
+- **Role-Based Access Control**: Separate permissions for Students and Instructors
+- **Password Management**: Change password and reset password functionality
+- **User Profiles**: Extended profile information with additional details
 
-### **2. Secure and Scalable Authentication**  
-- **JWT Authentication**: Token-based authentication for secure API access.  
-- **Password Hashing**: Implements `bcrypt` for hashing passwords before storage.  
-- **Two-Factor Authentication (2FA)**:  
-  - Optional 2FA via email verification with **Nodemailer**.  
-- **Rate Limiting**: Protects against brute force attacks using `express-rate-limit`.  
-- **Secure Cookies**: Session handling with `cookie-parser`.  
+### Course Management
+- **Course Creation**: Instructors can create comprehensive courses with descriptions, pricing, and thumbnails
+- **Course Structure**: Organize courses with sections and subsections
+- **Course Categories**: Categorize courses for better discovery
+- **Course Enrollment**: Students can browse and enroll in courses
+- **Course Progress Tracking**: Track student progress through course content
+- **Pagination Support**: Efficient course listing with customizable page sizes
 
-### **3. Payment Integration**  
-- **Razorpay Integration**:  
-  - Teachers can monetize courses by enabling paid access.  
-  - Students can make secure payments to enroll in premium courses.  
+### Payment Integration
+- **Razorpay Integration**: Secure payment processing for course purchases
+- **Payment Verification**: Webhook-based payment verification
+- **Transaction Management**: Atomic enrollment updates using MongoDB transactions
+- **Email Notifications**: Automated enrollment confirmation emails
 
-### **4. Media Uploads with Cloudinary**  
-- **Cloudinary Integration**:  
-  - Teachers can upload course-related media securely.  
-  - Cloud-based optimization and fast delivery of media assets.  
+### Rating & Review System
+- **Course Ratings**: Students can rate courses they've enrolled in
+- **Written Reviews**: Detailed feedback and reviews for courses
+- **Average Ratings**: Calculate and display average course ratings
+- **Review Aggregation**: View all reviews for better decision making
 
-### **5. File Upload Support**  
-- **express-fileupload**: Allows users to upload files such as profile pictures, documents, or course materials.  
+### Media & File Handling
+- **Cloudinary Integration**: Cloud-based image and media storage
+- **File Uploads**: Support for course thumbnails and user profile images
+- **Temporary File Management**: Efficient handling of uploaded files
 
-### **6. Modular & Optimized Performance**  
-- Designed with **Express.js** for a clean and maintainable REST API.  
-- Utilizes **Mongoose** for seamless interaction with **MongoDB**.  
-- Follows best practices for folder structure and code readability.  
+### Security & Performance
+- **Rate Limiting**: 100 requests per 15 minutes per IP address
+- **Input Validation**: Zod-based schema validation
+- **Password Hashing**: Bcrypt encryption for secure password storage
+- **CORS Support**: Cross-Origin Resource Sharing configuration
+- **Error Handling**: Centralized error handling middleware
 
----
+## 🛠️ Technology Stack
 
-## 🛠️ Technology Stack  
+### Backend
+- **Runtime**: Node.js with ES Modules
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: JSON Web Tokens (JWT)
+- **Validation**: Zod schema validation
 
-### **Backend**  
-- **Node.js**: Non-blocking, event-driven runtime for fast and efficient development.  
-- **Express.js**: Lightweight framework for building APIs.  
-- **MongoDB**: NoSQL database for handling large datasets efficiently.  
-- **Mongoose**: Schema-based Object Data Modeling (ODM) for MongoDB.  
+### Third-Party Services
+- **Payment Gateway**: Razorpay
+- **Media Storage**: Cloudinary
+- **Email Service**: Nodemailer (Gmail SMTP)
 
-### **Security & Authentication**  
-- **bcrypt**: For hashing passwords securely.  
-- **jsonwebtoken (JWT)**: Secure token-based session management.  
-- **express-rate-limit**: Limits repeated requests to prevent DDoS attacks.  
+### Key Dependencies
+- `express` - Web application framework
+- `mongoose` - MongoDB object modeling
+- `bcrypt` - Password hashing
+- `jsonwebtoken` - JWT authentication
+- `razorpay` - Payment processing
+- `cloudinary` - Media management
+- `nodemailer` - Email notifications
+- `express-rate-limit` - API rate limiting
+- `express-fileupload` - File upload handling
+- `cookie-parser` - Cookie parsing
+- `cors` - Cross-origin resource sharing
+- `dotenv` - Environment configuration
+- `zod` - Schema validation
 
-### **Payment Gateway**  
-- **Razorpay**: Seamless integration for payment processing.  
+## 📁 Project Structure
 
-### **Email Management**  
-- **Nodemailer**: Sends emails for **2FA**, notifications, and course updates.  
+```
+EduPrime/
+├── src/                          # Main backend application
+│   ├── config/                   # Configuration files
+│   │   ├── cloudinary.js        # Cloudinary setup
+│   │   ├── db.js                # MongoDB connection
+│   │   ├── nodemailer.js        # Email configuration
+│   │   └── razorpay.js          # Razorpay setup
+│   ├── controllers/             # Request handlers
+│   │   ├── authController.js    # Authentication logic
+│   │   ├── courseController.js  # Course operations
+│   │   ├── paymentController.js # Payment processing
+│   │   ├── profileController.js # Profile management
+│   │   ├── ratingAndReviewController.js
+│   │   ├── sectionController.js
+│   │   ├── subsectionController.js
+│   │   ├── catogoryController.js
+│   │   └── resetPasswordController.js
+│   ├── middlewares/             # Custom middleware
+│   │   └── authMiddleware.js    # Auth & authorization
+│   ├── models/                  # Mongoose schemas
+│   │   ├── userModel.js
+│   │   ├── profileModel.js
+│   │   ├── courseModel.js
+│   │   ├── sectionModel.js
+│   │   ├── subSectionModel.js
+│   │   ├── categoryModel.js
+│   │   ├── otpModel.js
+│   │   ├── courseProgressModel.js
+│   │   └── ratingAndReviewModel.js
+│   ├── routes/                  # API routes
+│   │   ├── userRoute.js         # User endpoints
+│   │   ├── courseRoute.js       # Course endpoints
+│   │   ├── profileRoute.js      # Profile endpoints
+│   │   └── paymentRoute.js      # Payment endpoints
+│   ├── utils/                   # Helper functions
+│   ├── validations/             # Validation schemas
+│   ├── .env                     # Environment variables
+│   ├── package.json
+│   └── server.js               # Application entry point
+├── platform/                    # Alternative backend (Prisma)
+└── README.md
+```
 
-### **File & Media Management**  
-- **Cloudinary**: Handles media uploads, optimization, and secure delivery.  
-- **express-fileupload**: Supports file uploads (e.g., profile pictures, documents).  
-
----
-
-## 🌐 Installation & Setup
+## 🚦 Getting Started
 
 ### Prerequisites
-1. **Node.js**: Version 14 or above.  
-2. **MongoDB**: Local installation or use MongoDB Atlas.  
-3. **Cloudinary**: Account for media uploads.  
-4. **Razorpay**: Account for payment integration.  
+
+- **Node.js**: v14.x or higher
+- **MongoDB**: v4.x or higher (local or MongoDB Atlas)
+- **npm**: v6.x or higher
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd EduPrime
+   ```
+
+2. **Navigate to the src directory**
+   ```bash
+   cd src
+   ```
+
+3. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+4. **Configure environment variables**
+   
+   Create a `.env` file in the `src` directory with the following variables:
+   ```env
+   # Database
+   MONGODB_URL=mongodb://localhost:27017/EduPrime
+   
+   # Server
+   PORT=8081
+   NODE_ENV=development
+   
+   # JWT
+   JWT_SECRET=your_jwt_secret_key
+   
+   # Email Configuration
+   MAIL_HOST=smtp.gmail.com
+   MAIL_USER=your_email@gmail.com
+   MAIL_PASS=your_app_specific_password
+   
+   # Razorpay
+   RAZORPAY_KEY=your_razorpay_key
+   RAZORPAY_SECRETE=your_razorpay_secret
+   RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
+   
+   # Cloudinary
+   CLOUD_NAME=your_cloudinary_cloud_name
+   API_KEY=your_cloudinary_api_key
+   API_SECRET=your_cloudinary_api_secret
+   FOLDER_NAME=EduPrime
+   ```
+
+5. **Start MongoDB**
+   ```bash
+   # If using local MongoDB
+   mongod
+   ```
+
+6. **Run the application**
+   ```bash
+   # Development mode with auto-restart
+   npm start
+   
+   # Production mode
+   node server.js
+   ```
+
+7. **Verify the server is running**
+   ```
+   Server is running on port 8081
+   ```
+
+## 🔗 API Overview
+
+The API is versioned and available at `/api/v1/`:
+
+- **User Routes** (`/api/v1/user`) - Authentication and user management
+- **Course Routes** (`/api/v1/course`) - Course operations and management
+- **Profile Routes** (`/api/v1/profile`) - User profile operations
+- **Payment Routes** (`/api/v1/payment`) - Payment processing
+
+
+## 🧪 Testing
+
+The API includes rate limiting (100 requests per 15 minutes). You can test endpoints using:
+
+- **Postman**: Import the API collection
+- **cURL**: Command-line testing
+- **Thunder Client**: VS Code extension
+
+## 🔐 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **Password Hashing**: Bcrypt with salt rounds of 10
+- **HTTP-Only Cookies**: Prevents XSS attacks
+- **Rate Limiting**: Prevents brute force attacks
+- **Input Validation**: Zod schema validation
+- **CORS Configuration**: Controlled cross-origin requests
+- **Environment Variables**: Sensitive data protection
+
+
+
+
 
 ---
-
-### Step-by-Step Guide
-
-#### 1. Clone the Repository
-```bash
-git clone https://github.com/your-username/eduprime.git  
-cd eduprime  
-2. Install Dependencies
-bash
-Copy
-Edit
-npm install  
-3. Configure Environment Variables
-Create a .env file in the root directory and add the following:
-
-env
-Copy
-Edit
-PORT=3000  
-MONGO_URL=your-mongodb-connection-string  
-JWT_SECRET=your-jwt-secret-key  
-EMAIL_SERVICE=your-email-service  
-EMAIL_USER=your-email@example.com  
-EMAIL_PASSWORD=your-email-password  
-CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name  
-CLOUDINARY_API_KEY=your-cloudinary-api-key  
-CLOUDINARY_API_SECRET=your-cloudinary-api-secret  
-RAZORPAY_KEY_ID=your-razorpay-key-id  
-RAZORPAY_KEY_SECRET=your-razorpay-key-secret  
-4. Start the Server
-bash
-Copy
-Edit
-npm start  
-5. Access the Application
-Navigate to http://localhost:3000 in your browser.
-
-🔐 Two-Factor Authentication (2FA)
-How It Works:
-User logs in with their email and password.
-A verification code is sent to their registered email.
-User completes login by entering the verification code.
-Note: 2FA is optional but significantly enhances account security.
-
-🌐 Media Management with Cloudinary
-Teachers can upload images or videos directly to Cloudinary for courses.
-Cloudinary optimizes and serves media content via secure URLs.
-💳 Payment Integration with Razorpay
-EduPrime integrates Razorpay for seamless payment processing:
-
-Premium Courses:
-Students can securely pay for premium courses.
-
-🛡️ Security Practices
-EduPrime ensures the following security measures:
-
-Password Protection:
-
-Passwords are hashed using bcrypt.
-JWT Token Security:
-
-Tokens are signed and set to expire to prevent misuse.
-Rate Limiting:
-
-Brute-force and spam protection using express-rate-limit.
-Environment Variables:
-
-Sensitive data (e.g., API keys, secrets) is securely stored in .env.
